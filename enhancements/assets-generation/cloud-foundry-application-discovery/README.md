@@ -99,6 +99,14 @@ To migrate applications from Cloud Foundry to Kubernetes, it is essential to tra
 
 The following table depicts the relationship between the Cloud Foundry Application manifest fields and the proposed location in the canonical form manifest.
 
+### Space specification {#space-specification}
+
+| Name | Mapped (Y/N) | Canonical Form | Description |
+| ----- | :---: | ----- | ----- |
+| **applications** | N |  | Direct mapping to a slice of canonical form manifests, each one representing the discovery results of a CF application `See app-level specification` |
+| **space** | Y | Metadata.Space | See [metadata specification](#metadata-specification).This field is only populated at runtime. |
+| **version** | N |  |  |
+
 ### Application specification {#application-specification}
 
 | Name | Mapped  | Canonical Form | Comments |
@@ -110,11 +118,11 @@ See [metadata specification](#metadata-specification). |
 | **env** | Y | Env |  |
 | **no-route** | Y | Routes | Processes will have no route information in the canonical form manifest. See [process specification](#process-specification). |
 | **processes** | Y | Processes | See [process specification](#process-specification) |
-| **random-route** | Y | Routes | See [route specification](#route-level-configuration). |
+| **random-route** | Y | Routes | See [route specification](#route-specification). |
 | **default-route** | Y |  | The default behavior for CF Applications is to define a route based on the name of the application and its domain ([https://docs.cloudfoundry.org/devguide/deploy-apps/deploy-app.html\#default-push](https://docs.cloudfoundry.org/devguide/deploy-apps/deploy-app.html#default-push)).
 Example:
 https://docs.cloudfoundry.org/devguide/multiple-processes.html |
-| **routes** | Y | Routes | See [route specification](#route-level-configuration). |
+| **routes** | Y | Routes | See [route specification](#route-specification). |
 | **services** | Y | Services | See [service specification](#service-specification). |
 | **sidecars** | Y | Sidecars | See [sidecar specification](#sidecar-specification). |
 | **metadata** | Y | Metadata | See [metadata specification](#metadata-specification). |
@@ -127,7 +135,7 @@ https://docs.cloudfoundry.org/devguide/multiple-processes.html |
 
 | Name | Mapped  | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
-| **name** | *Y* | Name | Name of the sidecar |
+| **name** | Y | Name | Name of the sidecar |
 | **process\_types** | Y | ProcessTypes | Slice of process types associated to this sidecar |
 | **command** | Y | Command | Command to run this sidecar |
 | **Memory** | Y | Memory | (Optional) The amount of memory allocated for the sidecar. |
@@ -138,15 +146,16 @@ Maps to Spec.Services in the canonical form. Only \`name\` and \`parameters\` fi
 
 | Name | Mapped  | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
-| **name** | *Y* | Name | Name of the service required by the application |
+| **name** | Y | Name | Name of the service required by the application |
 | **parameters** | Y | Parameters | Parameters to be used when connecting to the service. |
 
 ### Metadata specification {#metadata-specification}
 
 | Name | Mapped  | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
-| **Application.name** | *Y* | Name | Name is derived from the application’s Name field, which is stored in the metadata of the discovery manifest, following Kubernetes structured resources format. |
-| **labels** | *Y* | Labels |  |
+| **Application.name** | Y | Name | Name is derived from the application’s Name field, which is stored in the metadata of the discovery manifest, following Kubernetes structured resources format. |
+| **Space.name** | Y | Space | Captured at runtime only and it contains the name of the space where the application is deployed. |
+| **labels** | Y | Labels |  |
 | **annotations** | Y | Annotations |  |
 
 ### Process specification {#process-specification}
@@ -174,7 +183,7 @@ Note: In CF, limit for all instances of the **web** process; |
 
 | Name | Mapped  | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
-| **health-check-http-endpoint** | *Y* | Endpoint |  |
+| **health-check-http-endpoint** | Y | Endpoint |  |
 | **health-check-invocation-timeout** | Y | Timeout |  |
 | **health-check-interval** | Y | Interval |  |
 | **health-check-type** | N |  | Type of health check to perform; `none` is deprecated and an alias to `process` |
@@ -183,24 +192,32 @@ Note: In CF, limit for all instances of the **web** process; |
 
 | Name | Mapped  | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
-| **readiness-health-check-http-endpoint** | *Y* | Endpoint |  |
+| **readiness-health-check-http-endpoint** | Y | Endpoint |  |
 | **readiness-health-check-invocation-timeout** | Y | Timeout |  |
 | **readiness-health-check-interval** | Y | Interval |  |
 | **readiness-health-check-type** | N |  | Type of health check to perform; `none` is deprecated and an alias to `process` |
 
-## Route-level specification
+## Route specification {#route-specification}
 
 Captures the name of the route that will be shown as hostname.
 
 This can be either the application name (by default CF will try to create a route with the app name as the hostname when \`no-route\` is not set to true and the process has no route defined.
 
-If the application has globally defined routes, those processes of web type (worker type are not meant to have any port opened) will inherit the routes defined in this field. Overriden when a Process has defined their own routes.
+If the application has globally defined routes, those processes of web type (worker type are not meant to have any port opened) will inherit the routes defined in this field.
+Examples:
+\---
+
+	...
+	routes:
+	\- route: example.com
+	  protocol: http2
+	\- route: www.example.com/foo
+	\- route: tcp-example.com:1234
 
 | Name | Mapped  | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
-| **hostname** | Y | FQDN  | `FQDN as defined in the field value.` |
-|  |  | Port | If the hostname contains a port (TCP protocol type), it is captured in the Port field. |
-| **protocol** | *Y* | Protocol | It can be HTTP, HTTPS or TCP. |
+| **url** | Y | URL  | `URL as defined in the route field value.`  |
+| **protocol** | Y | Protocol | It can be HTTP, HTTPS or TCP. |
 
 
 ### User Stories [optional]
