@@ -76,7 +76,7 @@ to implement the design.  For instance,
 
 Cloud Foundry (CF) is a platform-as-a-service solution that simplifies application deployment by abstracting infrastructure concerns. Applications on CF are deployed using manifests, which are YAML files specifying application properties, resource allocations, environment variables, and service bindings. These manifests provide a structured and declarative way to define the runtime and platform configurations required for an application.
 
-MTA is an IBM research project with the goal to provide tools to migrate applications to other platforms, particularly Kubernetes. One of the use cases of MTA is to migrate Cloud Foundry applications to Kubernetes, but users have been struggling with the template language used to capture the Kubernetes resources, as it is not well known and requires an additional effort to master, compared to other templating languages.
+Move2Kube is an IBM research project with the goal to provide tools to migrate applications to other platforms, particularly Kubernetes. One of the use cases of Move2Kube is to migrate Cloud Foundry applications to Kubernetes, but users have been struggling with the template language used to capture the Kubernetes resources, as it is not well known and requires an additional effort to master, compared to other templating languages.
 
 ## Motivation
 
@@ -99,29 +99,26 @@ To migrate applications from Cloud Foundry to Kubernetes, it is essential to tra
 
 The following table depicts the relationship between the Cloud Foundry Application manifest fields and the proposed location in the canonical form manifest.
 
-### Space specification {#space-specification}
+### Space specification
 
 | Name | Mapped (Y/N) | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
 | **applications** | N |  | Direct mapping to a slice of canonical form manifests, each one representing the discovery results of a CF application. See [app-level specification](#application-specification) |
 | **space** | Y | Metadata.Space | See [metadata specification](#metadata-specification). This field is only populated at runtime. |
-| **version** | N |  |  |
+| **version** | N |  | The manifest schema version; currently the only valid version is 1, defaults to 1 if not provided |
 
-### Application specification {#application-specification}
+### Application specification
 
 | Name | Mapped  | Canonical Form | Comments |
 | ----- | :---: | ----- | ----- |
 | **name** | Y | Metadata.Name | Name is derived from the application’s Name field, which is stored in the metadata of the discovery manifest, following Kubernetes structured resources format.
 See [metadata specification](#metadata-specification). |
-| **buildpacks** | *N* |  | These fields in CF specify how to build your application (e.g., "nodejs\_buildpack", "java\_buildpack"). The canonical form should focus on "what" to deploy, not "how" to build it |
-| **docker** | Y | Process.Image | The value of the docker image pullspec is captured for each \`Process\` in the Image field. See [process specification](#process-level-configuration). |
+| **buildpacks** | N |  | These fields in CF specify how to build your application (e.g., "nodejs\_buildpack", "java\_buildpack"). The canonical form should focus on "what" to deploy, not "how" to build it |
+| **docker** | Y | Process.Image | The value of the docker image pullspec is captured for each \`Process\` in the `Image` field. See [process specification](#process-specification). |
 | **env** | Y | Env | Direct mapping from the application's `Env` field |
-| **no-route** | Y | Routes | Processes will have no route information in the canonical form manifest. See [process specification](#process-specification). |
+| **no-route** | Y | Routes | Processes will have no route information in the canonical form manifest. See [route specification](#route-specification). |
 | **processes** | Y | Processes | See [process specification](#process-specification) |
 | **random-route** | Y | Routes | See [route specification](#route-specification). |
-| **default-route** | Y |  | The default behavior for CF Applications is to define a route based on the name of the application and its domain ([https://docs.cloudfoundry.org/devguide/deploy-apps/deploy-app.html\#default-push](https://docs.cloudfoundry.org/devguide/deploy-apps/deploy-app.html#default-push)).
-Example:
-https://docs.cloudfoundry.org/devguide/multiple-processes.html |
 | **routes** | Y | Routes | See [route specification](#route-specification). |
 | **services** | Y | Services | See [service specification](#service-specification). |
 | **sidecars** | Y | Sidecars | See [sidecar specification](#sidecar-specification). |
@@ -131,7 +128,7 @@ https://docs.cloudfoundry.org/devguide/multiple-processes.html |
 | **instances** | Y | Replicas |  |
 | **stack** | Y | Stack |  |
 
-### Sidecar specification {#sidecar-specification}
+### Sidecar specification
 
 | Name | Mapped  | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
@@ -140,7 +137,7 @@ https://docs.cloudfoundry.org/devguide/multiple-processes.html |
 | **command** | Y | Command | Command to run this sidecar |
 | **Memory** | Y | Memory | (Optional) The amount of memory allocated for the sidecar. |
 
-### Service specification {#service-specification}
+### Service specification
 
 Maps to Spec.Services in the canonical form. Only \`name\` and \`parameters\` fields are captured since \`binding\_name\` is only used when defining a service and not applicable to a CF application.
 
@@ -149,7 +146,7 @@ Maps to Spec.Services in the canonical form. Only \`name\` and \`parameters\` fi
 | **name** | Y | Name | Name of the service required by the application |
 | **parameters** | Y | Parameters | Parameters to be used when connecting to the service. |
 
-### Metadata specification {#metadata-specification}
+### Metadata specification
 
 | Name | Mapped  | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
@@ -158,7 +155,7 @@ Maps to Spec.Services in the canonical form. Only \`name\` and \`parameters\` fi
 | **labels** | Y | Labels |  |
 | **annotations** | Y | Annotations |  |
 
-### Process specification {#process-specification}
+### Process specification
 
 | Name | Mapped | Canonical Form | Comments |
 | ----- | :---: | ----- | ----- |
@@ -167,7 +164,7 @@ Maps to Spec.Services in the canonical form. Only \`name\` and \`parameters\` fi
 | **command** | Y | Command | The command used to start the process. |
 | **disk\_quota** | Y | DiskQuota | Example: 1G unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case
 Note: In CF, limit for all instances of the **web** process; |
-| **memory** | Y | Memory | The value at the application level defines the default memory requirements for all processes in the application, when not specified by the process itself. The discovery process will consolidate the amount of memory specific to each process based on the information either in the application or the process fields. Example: 128MB unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case Note: In CF, limit for all instances of the **web** process; |
+| **memory** | Y | Memory | The value at the application level defines the default memory requirements for all processes in the application, when not specified by the process itself. The discovery process will consolidate the amount of memory specific to each process based on the information either in the application or the process fields. Example: 128MB unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case. Note: In CF, limit for all instances of the **web** process; |
 | **health-check-http-endpoint** | Y  | HealthCheck | health-check fields are captured in a Probe structure, common with the readiness-heath-check |
 | **health-check-invocation-timeout** |  |  |  |
 | **health-check-interval** |  |  |  |
@@ -197,7 +194,7 @@ Note: In CF, limit for all instances of the **web** process; |
 | **readiness-health-check-interval** | Y | Interval |  |
 | **readiness-health-check-type** | N |  | Type of health check to perform; `none` is deprecated and an alias to `process` |
 
-## Route specification {#route-specification}
+## Route specification
 
 Captures the name of the route that will be shown as hostname.
 
