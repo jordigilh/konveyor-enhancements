@@ -223,13 +223,21 @@ be a good place to talk about core concepts and how they relate.
 
 **Carefully think through the security implications for this change**
 
-What are the risks of this proposal and how do we mitigate. Think broadly. How
-will this impact the broader OKD ecosystem? Does this work in a managed services
-environment that has many tenants?
+_What are the risks of this proposal and how do we mitigate. Think broadly. How_
+_will this impact the broader OKD ecosystem? Does this work in a managed services_
+_environment that has many tenants?_
 
-How will security be reviewed and by whom? How will UX be reviewed and by whom?
+_How will security be reviewed and by whom? How will UX be reviewed and by whom?_
 
-Consider including folks that also work outside your immediate sub-project.
+_Consider including folks that also work outside your immediate sub-project._
+
+#### Canonical Manifest Misalignment
+Generated canonical manifests may not fully capture the original CF manifests,
+leading to incorrect deployments on Kubernetes.
+
+*Mitigation*
+Include a validation mechanism to compare the behavior of the original and
+migrated applications. Allow users to customize mappings during the migration process.
 
 ## Design Details
 
