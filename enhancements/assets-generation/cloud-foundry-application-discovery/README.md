@@ -115,7 +115,7 @@ The following table depicts the relationship between the Cloud Foundry Applicati
 See [metadata specification](#metadata-specification). |
 | **buildpacks** | *N* |  | These fields in CF specify how to build your application (e.g., "nodejs\_buildpack", "java\_buildpack"). The canonical form should focus on "what" to deploy, not "how" to build it |
 | **docker** | Y | Process.Image | The value of the docker image pullspec is captured for each \`Process\` in the Image field. See [process specification](#process-level-configuration). |
-| **env** | Y | Env |  |
+| **env** | Y | Env | Direct mapping from the application's `Env` field |
 | **no-route** | Y | Routes | Processes will have no route information in the canonical form manifest. See [process specification](#process-specification). |
 | **processes** | Y | Processes | See [process specification](#process-specification) |
 | **random-route** | Y | Routes | See [route specification](#route-specification). |
