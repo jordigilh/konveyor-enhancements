@@ -219,6 +219,24 @@ Examples:
 
 ### User Stories [optional]
 
+* As a DevOps engineer migrating multiple applications, I want an intermediate
+  canonical form that abstracts the complexities of Cloud Foundry manifests,
+  so that I can easily adapt and reuse it for Kubernetes deployment across
+  various platforms.
+
+* As a DevOps engineer migrating multiple applications, I want to clearly
+  understand the relationship between Cloud Foundry manifest fields and their
+  canonical equivalents, so that I can confidently map my application's
+  configurations to a Kubernetes-native environment.
+
+* As a DevOps engineer migrating an application with complex configurations, I
+  want the migration tool to preserve the intent and critical settings of the
+  original Cloud Foundry manifest, so that my application behaves consistently after migration.
+
+* As a DevOps engineer migrating applications, I want the migration tool to
+  focus only on generating a canonical form, so that I can independently choose
+  how to apply the canonical form using my preferred Kubernetes templating approach.
+
 ### Implementation Details/Notes/Constraints [optional]
 
 What are the caveats to the implementation? What are some important details that
