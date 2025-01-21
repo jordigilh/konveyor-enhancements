@@ -104,7 +104,7 @@ The following table depicts the relationship between the Cloud Foundry Applicati
 | Name | Mapped (Y/N) | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
 | **applications** | N |  | Direct mapping to a slice of canonical form manifests, each one representing the discovery results of a CF application. See [app-level specification](#application-specification) |
-| **space** | Y | Metadata.Space | See [metadata specification](#metadata-specification).This field is only populated at runtime. |
+| **space** | Y | Metadata.Space | See [metadata specification](#metadata-specification). This field is only populated at runtime. |
 | **version** | N |  |  |
 
 ### Application specification {#application-specification}
