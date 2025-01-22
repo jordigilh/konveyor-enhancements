@@ -166,7 +166,7 @@ app with this lifecycle, the Docker registry is queried for metadata about the
 image, such as ports and start command. When running an app with this lifecycle,
 a container is created and the Docker image is executed inside of it.
 
-#### Process-level configuration
+#### [Process-level configuration](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#processes)
 
 This configuration is for the individual process. Each process is created if it
 does not already exist. For backwards compatibility, the web process
@@ -191,7 +191,7 @@ listed under processes, this configuration will override any at the top level.
 | **memory** | string | The memory limit for all instances of the web process; this attribute requires a unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case |
 | **log-rate-limit-per-second** | string | The log rate limit for all the instances of the process; this attribute requires a unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case, or \-1 or 0 |
 
-##### Procfiles
+##### [Procfiles](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#procfiles)
 
 A Procfile enables you to declare required runtime processes, called process
 types, for your app. Procfiles must be named `Procfile` exactly and placed
@@ -239,7 +239,7 @@ Custom process types can also be configured via a manifest file. Read more about
 It is not recommended to specify processes in both a manifest and a Procfile for
 the same app.
 
-#### Route-level configuration
+#### [Route-level configuration](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#routes)
 
 This [configuration](https://docs.cloudfoundry.org/devguide/deploy-apps/manifest-attributes.html#routes)
 is for *creating* mappings between the app and a route. Each route is created if
@@ -265,7 +265,7 @@ Example:
 | **route** | string | **(Required)** The route URI |
 | **protocol** | string | (Optional) Protocol to use for this route. Valid protocols are `http1`, `http2`, and `tcp`. |
 
-#### Service-level configuration
+#### [Service-level configuration](https://docs.cloudfoundry.org/devguide/deploy-apps/manifest-attributes.html#services-block)
 
 This configuration is *creating* new service bindings between the app and a 
 service instance. The `services` field can take either an array of service 
@@ -279,7 +279,7 @@ instance name strings or an array of the following service-level fields.
 | **binding\_name** | string | The name of the service binding to be created |
 | **parameters** | object | A map of arbitrary key/value pairs to send to the service broker during binding |
 
-#### Sidecar-level configuration
+#### [Sidecar-level configuration](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#sidecars)
 
 This configuration is for the individual sidecar. Each sidecar is created if
 it does not already exist.
