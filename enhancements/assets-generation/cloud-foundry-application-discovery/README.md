@@ -123,7 +123,176 @@ generated and managed.
 The following table depicts the relationship between the Cloud Foundry Application
 manifest fields and the proposed location in the canonical form manifest.
 
-### Space specification
+### Cloud Foundry specification
+This section outlines the Cloud Foundry (CF) schema fields as documented in the 
+[official CF documentation](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#concepts).
+It serves as a reference point for comparing and understanding the mappings 
+presented in the [Proposal Specification](#proposal-specification) section.
+
+#### Space-level configuration
+
+##### Definition
+
+| Name | Type | Description |
+| ----- | ----- | ----- |
+| **applications** | *array of [app configurations](#app-level-configuration)* | Configurations for apps in the space |
+| **version** | *integer* | The manifest schema version; currently the only valid version is `1`, defaults to `1` if not provided |
+
+#### App-level configuration
+
+This configuration is specified per application and applies to all of the application’s processes.
+
+##### Definition
+
+| Name | Type | Description |
+| ----- | ----- | ----- |
+| **name** | *string* | Name of the app |
+| **buildpacks** | *list of strings* | a) An empty array, which will automatically select the appropriate default buildpack according to the coding language b) An array of one or more URLs pointing to buildpacks c) An array of one or more installed buildpack names Replaces the legacy `buildpack` field |
+| **docker** | *object* | If present, the created app will have *Docker lifecycle type*[^1]; the value of this key is ignored by the API but may be used by clients to source the registry address of the image and credentials, if needed; the [generate manifest endpoint](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#generate-a-manifest-for-an-app) will return the registry address of the image and username provided with this key |
+| **env** | *object* | A key-value mapping of environment variables to be used for the app when running |
+| **processes** | *array of [process configurations](#process-level-configuration)* | List of configurations for individual process types |
+| **random-route** | *boolean* | Creates a random route for the app if `true`; if `routes` is specified, if the app already has routes, or if `no-route` is specified, this field is ignored regardless of its value |
+| **default-route** | *boolean* | If true, a route for the app will be created using the app name as the hostname and the containing organization’s default domain as the domain; if `routes` is specified, if the app already has routes, or if `no-route` is specified, this field is ignored regardless of its value |
+| **no-route** | *bool* | If false, no route is created for this application, regardless of the configuration. Note that health checks will be impacted since CF [is not able to reach](https://lists.cloudfoundry.org/g/cf-dev/topic/app_attribute_no_route_true/6333713) to the app externally to check the heart beat. This will need to be addressed in the manifest template provided by the user. |
+| **routes** | *array of [route configurations](#route-level-configuration)* | List declaring HTTP and TCP routes to be mapped to the app. |
+| **services** | *array of [service configurations](#service-level-configuration)* | A list of service-instances to bind to the app |
+| **sidecars** | *array of [sidecar configurations](#sidecar-level-configuration)* | A list of configurations for individual sidecars |
+| **stack** | *string* | The root filesystem to use with the buildpack, for example `cflinuxfs4` |
+| **metadata.labels** | [*label object*](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#labels) | Labels applied to the app |
+| **metadata.annotations** | [*annotation object*](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#annotations) | Annotations applied to the app |
+| **buildpack** | *string* | **DEPRECATED in favor of the `buildpacks` field above** |
+| **timeout** | *integer* | **Maximum time it can take an application to startup before CF considers it as failed. Measured in seconds** |
+
+#### Process-level configuration
+
+This configuration is for the individual process. Each process is created if it
+does not already exist. For backwards compatibility, the web process
+configuration may be placed at the top level of the application configuration,
+rather than listed under processes. However, if there is a process with type: web
+listed under processes, this configuration will override any at the top level.
+
+##### Definition
+
+| Name | Type | Description |
+| ----- | ----- | ----- |
+| **type** | *string* | **(Required)** The identifier for the processes to be configured |
+| **command** | *string* | The command used to start the process; this overrides start commands from [Procfiles](#procfiles) and buildpacks |
+| **disk\_quota** | *string* | The disk limit for all instances of the web process; this attribute requires a unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case |
+| **health-check-http-endpoint** | *string* | Endpoint called to determine if the app is healthy |
+| **health-check-invocation-timeout** | *integer* | The timeout in seconds for individual health check requests for http and port health checks |
+| **health-check-type** | *string* | Type of health check to perform; `none` is deprecated and an alias to `process` |
+| **[readiness-health-check-http-endpoint](https://docs.cloudfoundry.org/devguide/deploy-apps/manifest-attributes.html#readiness-health-check-http-ep)** | *string* | Endpoint called to determine if the app is ready to accept traffic.  |
+| **[readiness-health-check-invocation-timeout](https://docs.cloudfoundry.org/devguide/deploy-apps/manifest-attributes.html#readiness-health-check-invoc-time)** | *integer* | The timeout in seconds for individual health check requests for http and port health checks |
+| **[readiness-health-check-type](https://docs.cloudfoundry.org/devguide/deploy-apps/manifest-attributes.html#readiness-health-check-type)** | *string* | Type of check to perform; `none` is deprecated and an alias to `process` |
+| **instances** | *integer* | The number of instances to run |
+| **memory** | *string* | The memory limit for all instances of the web process; this attribute requires a unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case |
+| **log-rate-limit-per-second** | *string* | The log rate limit for all the instances of the process; this attribute requires a unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case, or \-1 or 0 |
+
+##### Procfiles
+
+A Procfile enables you to declare required runtime processes, called process
+types, for your app. Procfiles must be named `Procfile` exactly and placed
+in the root directory of your application.
+
+***Example***
+
+```
+web: bundle exec rackup config.ru -p $PORT
+rake: bundle exec rake
+worker: bundle exec rake workers:start
+```
+
+In a Procfile, you declare one process type per line and use the syntax
+`PROCESS_TYPE: COMMAND`.
+
+* `PROCESS_TYPE` defines the type of the process.  
+* `COMMAND` is the command line to launch the process.
+
+###### Procfile use cases
+
+Many buildpacks provide their own process types and commands by default; however,
+there are special cases where specifying a custom `COMMAND` is necessary.
+Commands can be overwritten by providing a Procfile with the same process type.
+
+For example, a buildpack may provide a `worker` process type that runs the
+`rake default:start` command. If a Procfile is provided that also contains a
+`worker` process type, but a different command such as `rake custom:start`, the
+`rake custom:start` command will be used.
+
+Some buildpacks, such as Python, that work on a variety of frameworks, do not 
+attempt to provide a default start command. For these cases, a Procfile should
+be used to specify any necessary commands for the app.
+
+###### Web process
+
+`web` is a [special process type](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#web-process-type)
+that is required for all applications. The `web` `PROCESS_TYPE` must be specified
+by either the buildpack or the Procfile.
+
+###### Specifying processes in manifest files
+
+Custom process types can also be configured via a manifest file. Read more about
+[manifests](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#manifests).
+It is not recommended to specify processes in both a manifest and a Procfile for
+the same app.
+
+#### Route-level configuration
+
+This [configuration](https://docs.cloudfoundry.org/devguide/deploy-apps/manifest-attributes.html#routes)
+is for *creating* mappings between the app and a route. Each route is created if
+it does not already exist. The protocol will be updated for any existing route
+mapping.
+
+Example:
+
+```
+---
+  ...
+  routes:
+  - route: example.com
+    protocol: http2
+  - route: www.example.com/foo
+  - route: tcp-example.com:1234
+```
+
+##### Definition
+
+| Name | Type | Description |
+| ----- | ----- | ----- |
+| **route** | *string* | **(Required)** The route URI |
+| **protocol** | *string* | (Optional) Protocol to use for this route. Valid protocols are `http1`, `http2`, and `tcp`. |
+
+#### Service-level configuration
+
+This configuration is *creating* new service bindings between the app and a 
+service instance. The `services` field can take either an array of service 
+instance name strings or an array of the following service-level fields.
+
+##### Definition
+
+| Name | Type | Description |
+| ----- | ----- | ----- |
+| **name** | *string* | **(Required)** The name of the service instance to be bound to |
+| **binding\_name** | *string* | The name of the service binding to be created |
+| **parameters** | *object* | A map of arbitrary key/value pairs to send to the service broker during binding |
+
+#### Sidecar-level configuration
+
+This configuration is for the individual sidecar. Each sidecar is created if
+it does not already exist.
+
+##### Definition
+
+| Name | Type | Description |
+| ----- | ----- | ----- |
+| **name** | *string* | **(Required)** The identifier for the sidecars to be configured |
+| **command** | *string* | The command used to start the sidecar |
+| **process\_types** | *list of strings* | List of processes to associate sidecar with |
+| **memory** | *integer* | Memory in MB that the sidecar will be allocated |
+
+### Proposal Specification
+
+#### Space specification
 
 | Name | Mapped (Y/N) | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
@@ -131,7 +300,7 @@ manifest fields and the proposed location in the canonical form manifest.
 | **space** | Y | Metadata.Space | See [metadata specification](#metadata-specification). This field is only populated at runtime. |
 | **version** | N |  | The manifest schema version; currently the only valid version is 1, defaults to 1 if not provided |
 
-### Application specification
+#### Application specification
 
 | Name | Mapped  | Canonical Form | Comments |
 | ----- | :---: | ----- | ----- |
@@ -206,7 +375,9 @@ type Sidecar struct {
 
 ### Service specification
 
-Maps to Spec.Services in the canonical form. Only \`name\` and \`parameters\` CF fields are captured since \`binding\_name\` is only used when defining a service and not applicable to a Kubernetes application.
+Maps to Spec.Services in the canonical form. Only \`name\` and \`parameters\` CF
+fields are captured since \`binding\_name\` is only used when defining a service
+and not applicable to a Kubernetes application.
 
 | Name | Mapped  | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
