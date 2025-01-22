@@ -126,7 +126,7 @@ See [metadata specification](#metadata-specification). |
 | **buildpack** | N |  | Already deprecated in CF. See buildpacks. |
 | **timeout** | Y | StartupTimeout | Maximum time allowed for an application to respond to readiness or health checks during startup.If the application does not respond within this time, the platform will mark the deployment as failed. |
 | **instances** | Y | Replicas | Number of CF application instances |
-| **stack** | Y | Stack | Stack is derived from the `stack` field in the application manifest. The value is captured for information purposes because it has no relevance in Kubernetes. | 
+| **stack** | Y | Stack | Stack is derived from the `stack` field in the application manifest. The value is captured for information purposes because it has no relevance in Kubernetes. |
 
 ### Sidecar specification
 
@@ -274,11 +274,11 @@ compatibility.
 
 *Mitigation*
 
-Users will have to do due diligence before deploying on K8S, including the 
-creation of resources prior to the deployment of the K8S assets, such as 
+Users will have to do due diligence before deploying on K8S, including the
+creation of resources prior to the deployment of the K8S assets, such as
 `namespaces`, `services`, `secrets` and container images for `buildpacks`,
 for instance. \
-Developers may need to refactor applications or implement new solutions that 
+Developers may need to refactor applications or implement new solutions that
 align with Kubernetes practices.
 
 ## Design Details
@@ -300,35 +300,33 @@ expectations).
 
 ### Upgrade / Downgrade Strategy
 
-If applicable, how will the component be upgraded and downgraded? Make sure this
-is in the test plan.
-
-Consider the following in developing an upgrade/downgrade strategy for this
-enhancement:
-- What changes (in invocations, configurations, API use, etc.) is an existing
-  cluster required to make on upgrade in order to...
-  -  keep previous behavior?
-  - make use of the enhancement?
+N/A
 
 ## Implementation History
 
-Major milestones in the life cycle of a proposal should be tracked in `Implementation
-History`.
+- January 2025: Proposal created and approved.
+- (Tentative) February-March 2025: Initial MVP with support for CF manifest located in the filesystem where the CLI runs.
+  Some limitations might apply based on the use cases to implement first.
+- (Tentative) April 2025: Planned tech-preview release.
 
 ## Drawbacks
 
-The idea is to find the best form of an argument why this enhancement should _not_ be implemented.
+- M2K already provides discovery for Cloud Form application manifests. We could extend
+  it to reuse the discovery logic and avoid the cost of redoing what is already provided.
+- Breaks with existing M2K CLI support for CF application discovery. Some existing discovery
+  functionality might not be supported in the short term and users will have to migrate their
+  templates to the new Helm based template engine.
 
 ## Alternatives
 
-Similar to the `Drawbacks` section the `Alternatives` section is used to
-highlight and record other possible approaches to delivering the value proposed
-by an enhancement.
+- Reuse the existing M2K functionality for discovery, at the expense of using a code that is not ideal to manage
+  and we are not a principal stakeholder.
 
 ## Infrastructure Needed [optional]
 
-Use this section if you need things from the project. Examples include a new
-subproject, repos requested, github details, and/or testing infrastructure.
-
-Listing these here allows the community to get the process for these resources
-started right away.
+- CI/CD pipelines for building and unit/integration testing.
+- CI/CD pipelines for E2E testing for QE and releasing.
+- Hosting provider for binaries and documentation for releases.
+- Project Management tools for tasks, issues and bugs.
+- If REST API discovery is implemented, a Cloud Foundry instance for E2E testing with a suite of samples that cover
+  the acceptance test criteria.
