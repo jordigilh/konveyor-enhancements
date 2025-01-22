@@ -223,13 +223,45 @@ be a good place to talk about core concepts and how they relate.
 
 **Carefully think through the security implications for this change**
 
-What are the risks of this proposal and how do we mitigate. Think broadly. How
-will this impact the broader OKD ecosystem? Does this work in a managed services
-environment that has many tenants?
+_What are the risks of this proposal and how do we mitigate. Think broadly. How_
+_will this impact the broader OKD ecosystem? Does this work in a managed services_
+_environment that has many tenants?_
 
-How will security be reviewed and by whom? How will UX be reviewed and by whom?
+_How will security be reviewed and by whom? How will UX be reviewed and by whom?_
 
-Consider including folks that also work outside your immediate sub-project.
+_Consider including folks that also work outside your immediate sub-project._
+
+#### Canonical Manifest Misalignment
+CF provides features that are not directly mappable to Kubernetes-native
+concepts, requiring additional work during the migration process to ensure
+compatibility.
+
+- *Buildpacks* \
+  Cloud Foundry utilizes buildpacks to handle application dependencies and
+  runtime environments, which do not have a direct equivalent in Kubernetes.
+  This means that applications relying on buildpacks will require additional
+  configuration or alternative solutions when migrating to Kubernetes.
+- *Docker Secrets* \
+  In CF, secrets management is integrated into the platform, while Kubernetes
+  uses a more granular approach with its own secrets management system. This
+  discrepancy necessitates a different handling method for sensitive information
+  during migration.
+- *Services* \
+  Services in CF are managed differently than in Kubernetes. For
+  instance, CF abstracts many operational concerns, while Kubernetes requires
+  explicit configuration for service discovery and networking. This difference
+  can lead to complexities during migration as developers must adapt to the
+  Kubernetes model of service management.
+
+
+*Mitigation*
+
+Users will have to do due diligence before deploying on K8S, including the 
+creation of resources prior to the deployment of the K8S assets, such as 
+`namespaces`, `services`, `secrets` and container images for `buildpacks`,
+for instance. \
+Developers may need to refactor applications or implement new solutions that 
+align with Kubernetes practices.
 
 ## Design Details
 
