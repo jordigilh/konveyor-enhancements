@@ -120,8 +120,8 @@ as platform-agnostic and compatible with multiple templating engines like Helm
 or Ansible, enabling flexibility in how the deployment configurations are
 generated and managed.
 
-The following table depicts the relationship between the Cloud Foundry Application
-manifest fields and the proposed location in the canonical form manifest.
+These structures are intended to abstract the CF application manifest format
+so that changes to the CF manifest are contained.
 
 ### Cloud Foundry specification
 This section outlines the Cloud Foundry (CF) schema fields as documented in the 
