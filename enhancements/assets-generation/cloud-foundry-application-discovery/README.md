@@ -171,7 +171,7 @@ a container is created and the Docker image is executed inside of it.
 This configuration is for the individual process. Each process is created if it
 does not already exist. For backwards compatibility, the web process
 configuration may be placed at the top level of the application configuration,
-rather than listed under processes. However, if there is a process with type: web
+rather than listed under processes. However, if there is a process with `type: web`
 listed under processes, this configuration will override any at the top level.
 
 ##### Definition
@@ -469,6 +469,9 @@ type Process struct {
 ### ProcessType specification
 
 Represents a single process type as a string. Possible values are `worker`, or `web`.
+
+The proposed specification doesn't support custom process types defined in CF
+manifests or Procfiles.
 
 ```go
 type ProcessType string
