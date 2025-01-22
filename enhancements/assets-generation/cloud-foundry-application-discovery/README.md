@@ -258,13 +258,13 @@ type Metadata struct {
 | **disk\_quota** | Y | DiskQuota | Example: 1G unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case
 Note: In CF, limit for all instances of the **web** process; |
 | **memory** | Y | Memory | The value at the application level defines the default memory requirements for all processes in the application, when not specified by the process itself. The discovery process will consolidate the amount of memory specific to each process based on the information either in the application or the process fields. Example: 128MB unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case. Note: In CF, limit for all instances of the **web** process; |
-| **health-check-http-endpoint** | Y  | Probe.Endpoint | health-check fields are captured in a Probe structure, common with the readiness-heath-check. See (Probe specification)[#probe-specification]. |
-| **health-check-invocation-timeout** | Y | Probe.Timeout | See (Probe specification)[#probe-specification]. |
-| **health-check-interval** | Y | Probe.Interval | See (Probe specification)[#probe-specification]. |
+| **health-check-http-endpoint** | Y  | Probe.Endpoint | health-check fields are captured in a Probe structure, common with the readiness-heath-check. See [Probe specification](#probe-specification). |
+| **health-check-invocation-timeout** | Y | Probe.Timeout | See [Probe specification](#probe-specification). |
+| **health-check-interval** | Y | Probe.Interval | See [Probe specification](#probe-specification). |
 | **health-check-type** | N |  | Type of health check to perform; `none` is deprecated and an alias to `process` |
-| **readiness-check-http-endpoint** | Y | Probe.Endpoint | See (Probe specification)[#probe-specification]. |
-| **readiness-check-invocation-timeout** | Y | Probe.Timeout | See (Probe specification)[#probe-specification]. |
-| **readiness-check-interval** | Y | Probe.Interval | See (Probe specification)[#probe-specification]. |
+| **readiness-check-http-endpoint** | Y | Probe.Endpoint | See [Probe specification](#probe-specification). |
+| **readiness-check-invocation-timeout** | Y | Probe.Timeout | See [Probe specification](#probe-specification). |
+| **readiness-check-interval** | Y | Probe.Interval | See [Probe specification](#probe-specification). |
 | **readiness-health-check-type** | N |  | Type of health check to perform; `none` is deprecated and an alias to `process` |
 | **instances** | Y | Replicas | This field determines how many instances of the process will run in the application. |
 | **log-rate-limit-per-second** | Y | LogRateLimit | The log rate limit for all the instances of the process; unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case, or -1 or 0 |
