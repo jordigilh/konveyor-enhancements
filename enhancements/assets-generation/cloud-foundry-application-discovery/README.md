@@ -152,7 +152,6 @@ This configuration is specified per application and applies to all of the applic
 | **env** | *object* | A key-value mapping of environment variables to be used for the app when running |
 | **processes** | *array of [process configurations](#process-level-configuration)* | List of configurations for individual process types |
 | **random-route** | *boolean* | Creates a random route for the app if `true`; if `routes` is specified, if the app already has routes, or if `no-route` is specified, this field is ignored regardless of its value |
-| **default-route** | *boolean* | If true, a route for the app will be created using the app name as the hostname and the containing organization’s default domain as the domain; if `routes` is specified, if the app already has routes, or if `no-route` is specified, this field is ignored regardless of its value |
 | **no-route** | *bool* | If false, no route is created for this application, regardless of the configuration. Note that health checks will be impacted since CF [is not able to reach](https://lists.cloudfoundry.org/g/cf-dev/topic/app_attribute_no_route_true/6333713) to the app externally to check the heart beat. This will need to be addressed in the manifest template provided by the user. |
 | **routes** | *array of [route configurations](#route-level-configuration)* | List declaring HTTP and TCP routes to be mapped to the app. |
 | **services** | *array of [service configurations](#service-level-configuration)* | A list of service-instances to bind to the app |
