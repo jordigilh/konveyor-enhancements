@@ -157,8 +157,8 @@ This configuration is specified per application and applies to all of the applic
 | **services** | array of [service configurations](#service-level-configuration) | A list of service-instances to bind to the app |
 | **sidecars** | array of [sidecar configurations](#sidecar-level-configuration) | A list of configurations for individual sidecars |
 | **stack** | string | The root filesystem to use with the buildpack, for example `cflinuxfs4` |
-| **metadata.labels** | [label object](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#labels) | Labels applied to the app |
-| **metadata.annotations** | [annotation object](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#annotations) | Annotations applied to the app |
+| **metadata.labels** | array of k/v pairs | Labels applied to the app |
+| **metadata.annotations** | array of k/v pairs | Annotations applied to the app |
 | **buildpack** | string | **DEPRECATED in favor of the `buildpacks` field above** |
 | **timeout** | integer | **Maximum time it can take an application to startup before CF considers it as failed. Measured in seconds** |
 
