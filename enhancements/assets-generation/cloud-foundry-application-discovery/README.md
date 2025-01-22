@@ -159,7 +159,6 @@ This configuration is specified per application and applies to all of the applic
 | **stack** | string | The root filesystem to use with the buildpack, for example `cflinuxfs4` |
 | **metadata.labels** | array of k/v pairs | Labels applied to the app |
 | **metadata.annotations** | array of k/v pairs | Annotations applied to the app |
-| **buildpack** | string | **DEPRECATED in favor of the `buildpacks` field above** |
 | **timeout** | integer | **Maximum time it can take an application to startup before CF considers it as failed. Measured in seconds** |
 
 [^1] This allows Cloud Foundry to run pre-built Docker images. When staging an
@@ -320,7 +319,6 @@ See [metadata specification](#metadata-specification). |
 | **services** | Y | Services | See [service specification](#service-specification). |
 | **sidecars** | Y | Sidecars | See [sidecar specification](#sidecar-specification). |
 | **metadata** | Y | Metadata | See [metadata specification](#metadata-specification). |
-| **buildpack** | N |  | Already deprecated in CF. See buildpacks. |
 | **timeout** | Y | StartupTimeout | Maximum time allowed for an application to respond to readiness or health checks during startup.If the application does not respond within this time, the platform will mark the deployment as failed. |
 | **instances** | Y | Replicas | Number of CF application instances |
 | **stack** | Y | Stack | Stack is derived from the `stack` field in the application manifest. The value is captured for information purposes because it has no relevance in Kubernetes. |
