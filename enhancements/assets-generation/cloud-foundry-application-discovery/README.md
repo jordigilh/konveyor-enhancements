@@ -125,7 +125,7 @@ See [metadata specification](#metadata-specification). |
 | **metadata** | Y | Metadata | See [metadata specification](#metadata-specification). |
 | **buildpack** | N |  | Already deprecated in CF. See buildpacks. |
 | **timeout** | Y | StartupTimeout | Maximum time allowed for an application to respond to readiness or health checks during startup.If the application does not respond within this time, the platform will mark the deployment as failed. |
-| **instances** | Y | Instances | Number of CF application instances |
+| **instances** | Y | Replicas | Number of CF application instances |
 | **stack** | Y | Stack | Stack is derived from the `stack` field in the application manifest. The value is captured for information purposes because it has no relevance in Kubernetes. | 
 
 ### Sidecar specification
