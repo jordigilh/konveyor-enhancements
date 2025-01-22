@@ -163,6 +163,11 @@ This configuration is specified per application and applies to all of the applic
 | **buildpack** | *string* | **DEPRECATED in favor of the `buildpacks` field above** |
 | **timeout** | *integer* | **Maximum time it can take an application to startup before CF considers it as failed. Measured in seconds** |
 
+[^1] This allows Cloud Foundry to run pre-built Docker images. When staging an
+app with this lifecycle, the Docker registry is queried for metadata about the
+image, such as ports and start command. When running an app with this lifecycle,
+a container is created and the Docker image is executed inside of it.
+
 #### Process-level configuration
 
 This configuration is for the individual process. Each process is created if it
