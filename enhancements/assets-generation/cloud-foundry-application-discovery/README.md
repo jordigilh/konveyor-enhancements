@@ -124,27 +124,27 @@ See [metadata specification](#metadata-specification). |
 | **sidecars** | Y | Sidecars | See [sidecar specification](#sidecar-specification). |
 | **metadata** | Y | Metadata | See [metadata specification](#metadata-specification). |
 | **buildpack** | N |  | Already deprecated in CF. See buildpacks. |
-| **timeout** | Y | StartupTimeout |  |
-| **instances** | Y | Replicas |  |
-| **stack** | Y | Stack |  |
+| **timeout** | Y | StartupTimeout | Maximum time allowed for an application to respond to readiness or health checks during startup.If the application does not respond within this time, the platform will mark the deployment as failed. |
+| **instances** | Y | Replicas | Number of CF application instances |
+| **stack** | Y | Stack | Stack is derived from the `stack` field in the application manifest. The value is captured for information purposes because it has no relevance in Kubernetes. | 
 
 ### Sidecar specification
 
 | Name | Mapped  | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
 | **name** | Y | Name | Name of the sidecar |
-| **process\_types** | Y | ProcessTypes | Slice of process types associated to this sidecar |
+| **process\_types** | Y | ProcessTypes | ProcessTypes captures the different process types defined for the sidecar. Compared to a Process, which has only one type, sidecar processes can accumulate more than one type. See [processtype specification](#processtype-specification).|
 | **command** | Y | Command | Command to run this sidecar |
-| **Memory** | Y | Memory | (Optional) The amount of memory allocated for the sidecar. |
+| **Memory** | Y | Memory | (Optional) The amount of memory to allocate to the sidecar. |
 
 ### Service specification
 
-Maps to Spec.Services in the canonical form. Only \`name\` and \`parameters\` fields are captured since \`binding\_name\` is only used when defining a service and not applicable to a CF application.
+Maps to Spec.Services in the canonical form. Only \`name\` and \`parameters\` CF fields are captured since \`binding\_name\` is only used when defining a service and not applicable to a Kubernetes application.
 
 | Name | Mapped  | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
 | **name** | Y | Name | Name of the service required by the application |
-| **parameters** | Y | Parameters | Parameters to be used when connecting to the service. |
+| **parameters** | Y | Parameters | key/value pairs for the application to use when connecting to the service. |
 
 ### Metadata specification
 
@@ -152,8 +152,8 @@ Maps to Spec.Services in the canonical form. Only \`name\` and \`parameters\` fi
 | ----- | :---: | ----- | ----- |
 | **Application.name** | Y | Name | Name is derived from the application’s Name field, which is stored in the metadata of the discovery manifest, following Kubernetes structured resources format. |
 | **Space.name** | Y | Space | Captured at runtime only and it contains the name of the space where the application is deployed. |
-| **labels** | Y | Labels |  |
-| **annotations** | Y | Annotations |  |
+| **labels** | Y | Labels |  Labels capture the labels as defined in the `labels` field in the CF application manifest |
+| **annotations** | Y | Annotations | Annotations as defined in the `annotations` field in the CF application manifest |
 
 ### Process specification
 
@@ -165,42 +165,37 @@ Maps to Spec.Services in the canonical form. Only \`name\` and \`parameters\` fi
 | **disk\_quota** | Y | DiskQuota | Example: 1G unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case
 Note: In CF, limit for all instances of the **web** process; |
 | **memory** | Y | Memory | The value at the application level defines the default memory requirements for all processes in the application, when not specified by the process itself. The discovery process will consolidate the amount of memory specific to each process based on the information either in the application or the process fields. Example: 128MB unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case. Note: In CF, limit for all instances of the **web** process; |
-| **health-check-http-endpoint** | Y  | HealthCheck | health-check fields are captured in a Probe structure, common with the readiness-heath-check |
-| **health-check-invocation-timeout** |  |  |  |
-| **health-check-interval** |  |  |  |
+| **health-check-http-endpoint** | Y  | Probe.Endpoint | health-check fields are captured in a Probe structure, common with the readiness-heath-check. See (Probe specification)[#probe-specification]. |
+| **health-check-invocation-timeout** | Y | Probe.Timeout | See (Probe specification)[#probe-specification]. |
+| **health-check-interval** | Y | Probe.Interval | See (Probe specification)[#probe-specification]. |
 | **health-check-type** | N |  | Type of health check to perform; `none` is deprecated and an alias to `process` |
-| **readiness-check-http-endpoint** | Y | ReadinessCheck | readiness-health-check fields are captured in a Probe structure, common with the heath-check |
-| **readiness-check-invocation-timeout** |  |  |  |
-| **readiness-check-interval** |  |  |  |
+| **readiness-check-http-endpoint** | Y | Probe.Endpoint | See (Probe specification)[#probe-specification]. |
+| **readiness-check-invocation-timeout** | Y | Probe.Timeout | See (Probe specification)[#probe-specification]. |
+| **readiness-check-interval** | Y | Probe.Interval | See (Probe specification)[#probe-specification]. |
 | **readiness-health-check-type** | N |  | Type of health check to perform; `none` is deprecated and an alias to `process` |
-| **instances** | Y | Replicas | This field determines how many instances of the process will run in the application.  |
-| **log-rate-limit-per-second** | Y | LogRateLimit | The log rate limit for all the instances of the process; unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case, or \-1 or 0 |
+| **instances** | Y | Replicas | This field determines how many instances of the process will run in the application. |
+| **log-rate-limit-per-second** | Y | LogRateLimit | The log rate limit for all the instances of the process; unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case, or -1 or 0 |
 
-## HealthCheck specification
+### ProcessType specification
+
+Represents a single process type as a string. Possible values are `worker`, or `web`.
+
+## Probe specification
 
 | Name | Mapped  | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
-| **health-check-http-endpoint** | Y | Endpoint |  |
-| **health-check-invocation-timeout** | Y | Timeout |  |
-| **health-check-interval** | Y | Interval |  |
-| **health-check-type** | N |  | Type of health check to perform; `none` is deprecated and an alias to `process` |
-
-## ReadinessCheck specification
-
-| Name | Mapped  | Canonical Form | Description |
-| ----- | :---: | ----- | ----- |
-| **readiness-health-check-http-endpoint** | Y | Endpoint |  |
-| **readiness-health-check-invocation-timeout** | Y | Timeout |  |
-| **readiness-health-check-interval** | Y | Interval |  |
-| **readiness-health-check-type** | N |  | Type of health check to perform; `none` is deprecated and an alias to `process` |
+| **health-check-http-endpoint** | Y | Endpoint | HTTP endpoint to be used for health checks, specifying the path to be monitored. |
+| **health-check-invocation-timeout** | Y | Timeout | Maximum time allowed for each health check invocation to complete. |
+| **health-check-interval** | Y | Interval | Interval at which health checks are performed to monitor the application’s status. |
+| **health-check-type** | N |  | Specifies the type of health check to perform (`none`, `http`, `tcp`, or `process`). Note: `none` is deprecated and an alias for process. |
 
 ## Route specification
 
 Captures the name of the route that will be shown as hostname.
 
-This can be either the application name (by default CF will try to create a route with the app name as the hostname when \`no-route\` is not set to true and the process has no route defined.
-
-If the application has globally defined routes, those processes of web type (worker type are not meant to have any port opened) will inherit the routes defined in this field.
+By default, the route URL is set using the application name as the hostname unless the `no-route` field is set to `true` or a route URL is explicitly defined.
+Processes of the `worker` type are not designed to have any ports open.
+If the application has globally defined routes, processes of the `web` type inherit the routes specified in that field.
 Examples:
 \---
 
@@ -214,8 +209,7 @@ Examples:
 | Name | Mapped  | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
 | **url** | Y | URL  | `URL as defined in the route field value.`  |
-| **protocol** | Y | Protocol | It can be HTTP, HTTPS or TCP. |
-
+| **protocol** | Y | Protocol | It can be `HTTP`, `HTTPS` or `TCP`. |
 
 ### User Stories [optional]
 
