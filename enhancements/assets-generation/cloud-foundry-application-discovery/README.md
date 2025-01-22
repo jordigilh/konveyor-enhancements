@@ -147,7 +147,7 @@ This configuration is specified per application and applies to all of the applic
 | Name | Type | Description |
 | ----- | ----- | ----- |
 | **name** | string | Name of the app |
-| **buildpacks** | list of strings | a) An empty array, which will automatically select the appropriate default buildpack according to the coding language b) An array of one or more URLs pointing to buildpacks c) An array of one or more installed buildpack names Replaces the legacy `buildpack` field |
+| **buildpacks** | array of strings | a) An empty array, which will automatically select the appropriate default buildpack according to the coding language b) An array of one or more URLs pointing to buildpacks c) An array of one or more installed buildpack names Replaces the legacy `buildpack` field |
 | **docker** | object | If present, the created app will have *Docker lifecycle type*[^1]; the value of this key is ignored by the API but may be used by clients to source the registry address of the image and credentials, if needed; the [generate manifest endpoint](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#generate-a-manifest-for-an-app) will return the registry address of the image and username provided with this key |
 | **env** | object | A key-value mapping of environment variables to be used for the app when running |
 | **processes** | array of [process configurations](#process-level-configuration) | List of configurations for individual process types |
@@ -290,7 +290,7 @@ it does not already exist.
 | ----- | ----- | ----- |
 | **name** | string | **(Required)** The identifier for the sidecars to be configured |
 | **command** | string | The command used to start the sidecar |
-| **process\_types** | list of strings | List of processes to associate sidecar with |
+| **process\_types** | array of strings | List of processes to associate sidecar with |
 | **memory** | integer | Memory in MB that the sidecar will be allocated |
 
 ### Proposal Specification
