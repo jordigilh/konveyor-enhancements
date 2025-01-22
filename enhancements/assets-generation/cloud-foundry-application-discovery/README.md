@@ -74,20 +74,36 @@ to implement the design.  For instance,
 
 ## Summary
 
-Cloud Foundry (CF) is a platform-as-a-service solution that simplifies application deployment by abstracting infrastructure concerns. Applications on CF are deployed using manifests, which are YAML files specifying application properties, resource allocations, environment variables, and service bindings. These manifests provide a structured and declarative way to define the runtime and platform configurations required for an application.
+Cloud Foundry (CF) is a platform-as-a-service solution that simplifies application
+deployment by abstracting infrastructure concerns. Applications on CF are deployed
+using manifests, which are YAML files specifying application properties, resource
+allocations, environment variables, and service bindings. These manifests provide
+a structured and declarative way to define the runtime and platform configurations
+required for an application.
 
-Move2Kube is an IBM research project with the goal to provide tools to migrate applications to other platforms, particularly Kubernetes. One of the use cases of Move2Kube is to migrate Cloud Foundry applications to Kubernetes, but users have been struggling with the template language used to capture the Kubernetes resources, as it is not well known and requires an additional effort to master, compared to other templating languages.
+Move2Kube is an IBM research project with the goal to provide tools to migrate
+applications to other platforms, particularly Kubernetes. One of the use cases
+of Move2Kube is to migrate Cloud Foundry applications to Kubernetes, but users
+have been struggling with the template language used to capture the Kubernetes
+resources, as it is not well known and requires an additional effort to master,
+ compared to other templating languages.
 
 ## Motivation
 
-The challenge brought by the templating language severely impacts the usability and acceptance of the tool. Thus the existence of this enhancement to provide a similar tool to MTA, extensible, and that improves on the templating engine, so that it offers a pluggable design that can be used to implement well known templating engines.
+The challenge brought by the templating language severely impacts the usability
+and acceptance of the tool. Thus the existence of this enhancement to provide a
+similar tool to MTA, extensible, and that improves on the templating engine, so
+that it offers a pluggable design that can be used to implement well known
+templating engines.
 
 ### Goals
 
 * Identify and understand Cloud Foundry Application manifests (v3) fields.
-* Extract and process Cloud Foundry application manifest into a new canonical form, capturing the intent of the original field value and
-  with the foresight of the future application of the given field in a Kubernetes platform.
-* Provide documentation for developers to understand the relationship between the original manifest and resulting canonical manifest.
+* Extract and process Cloud Foundry application manifest into a new canonical
+  form, capturing the intent of the original field value and with the foresight
+  of the future application of the given field in a Kubernetes platform.
+* Provide documentation for developers to understand the relationship between
+  the original manifest and resulting canonical manifest.
 
 ### Non-Goals
 
@@ -95,9 +111,17 @@ The challenge brought by the templating language severely impacts the usability 
 
 ## Proposal
 
-To migrate applications from Cloud Foundry to Kubernetes, it is essential to translate these manifests into an intermediate format, or canonical form, that captures the intent and configuration of the CF manifest. This intermediate manifest serves as a bridge, retaining critical deployment configurations while adapting them to Kubernetes-native practices. The format needs to be designed as platform-agnostic and compatible with multiple templating engines like Helm or Ansible, enabling flexibility in how the deployment configurations are generated and managed.
+To migrate applications from Cloud Foundry to Kubernetes, it is essential to
+translate these manifests into an intermediate format, or canonical form, that
+captures the intent and configuration of the CF manifest. This intermediate
+manifest serves as a bridge, retaining critical deployment configurations while
+adapting them to Kubernetes-native practices. The format needs to be designed 
+as platform-agnostic and compatible with multiple templating engines like Helm
+or Ansible, enabling flexibility in how the deployment configurations are
+generated and managed.
 
-The following table depicts the relationship between the Cloud Foundry Application manifest fields and the proposed location in the canonical form manifest.
+The following table depicts the relationship between the Cloud Foundry Application
+manifest fields and the proposed location in the canonical form manifest.
 
 ### Space specification
 
@@ -309,9 +333,11 @@ type Probe struct {
 
 Captures the name of the route that will be shown as hostname.
 
-By default, the route URL is set using the application name as the hostname unless the `no-route` field is set to `true` or a route URL is explicitly defined.
+By default, the route URL is set using the application name as the hostname
+unless the `no-route` field is set to `true` or a route URL is explicitly defined.
 Processes of the `worker` type are not designed to have any ports open.
-If the application has globally defined routes, processes of the `web` type inherit the routes specified in that field.
+If the application has globally defined routes, processes of the `web` type
+inherit the routes specified in that field. \
 Examples:
 \---
 
