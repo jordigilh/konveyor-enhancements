@@ -74,20 +74,36 @@ to implement the design.  For instance,
 
 ## Summary
 
-Cloud Foundry (CF) is a platform-as-a-service solution that simplifies application deployment by abstracting infrastructure concerns. Applications on CF are deployed using manifests, which are YAML files specifying application properties, resource allocations, environment variables, and service bindings. These manifests provide a structured and declarative way to define the runtime and platform configurations required for an application.
+Cloud Foundry (CF) is a platform-as-a-service solution that simplifies application
+deployment by abstracting infrastructure concerns. Applications on CF are deployed
+using manifests, which are YAML files specifying application properties, resource
+allocations, environment variables, and service bindings. These manifests provide
+a structured and declarative way to define the runtime and platform configurations
+required for an application.
 
-Move2Kube is an IBM research project with the goal to provide tools to migrate applications to other platforms, particularly Kubernetes. One of the use cases of Move2Kube is to migrate Cloud Foundry applications to Kubernetes, but users have been struggling with the template language used to capture the Kubernetes resources, as it is not well known and requires an additional effort to master, compared to other templating languages.
+Move2Kube is an IBM research project with the goal to provide tools to migrate
+applications to other platforms, particularly Kubernetes. One of the use cases
+of Move2Kube is to migrate Cloud Foundry applications to Kubernetes, but users
+have been struggling with the template language used to capture the Kubernetes
+resources, as it is not well known and requires an additional effort to master,
+ compared to other templating languages.
 
 ## Motivation
 
-The challenge brought by the templating language severely impacts the usability and acceptance of the tool. Thus the existence of this enhancement to provide a similar tool to MTA, extensible, and that improves on the templating engine, so that it offers a pluggable design that can be used to implement well known templating engines.
+The challenge brought by the templating language severely impacts the usability
+and acceptance of the tool. Thus the existence of this enhancement to provide a
+similar tool to MTA, extensible, and that improves on the templating engine, so
+that it offers a pluggable design that can be used to implement well known
+templating engines.
 
 ### Goals
 
 * Identify and understand Cloud Foundry Application manifests (v3) fields.
-* Extract and process Cloud Foundry application manifest into a new canonical form, capturing the intent of the original field value and
-  with the foresight of the future application of the given field in a Kubernetes platform.
-* Provide documentation for developers to understand the relationship between the original manifest and resulting canonical manifest.
+* Extract and process Cloud Foundry application manifest into a new canonical
+  form, capturing the intent of the original field value and with the foresight
+  of the future application of the given field in a Kubernetes platform.
+* Provide documentation for developers to understand the relationship between
+  the original manifest and resulting canonical manifest.
 
 ### Non-Goals
 
@@ -95,11 +111,191 @@ The challenge brought by the templating language severely impacts the usability 
 
 ## Proposal
 
-To migrate applications from Cloud Foundry to Kubernetes, it is essential to translate these manifests into an intermediate format, or canonical form, that captures the intent and configuration of the CF manifest. This intermediate manifest serves as a bridge, retaining critical deployment configurations while adapting them to Kubernetes-native practices. The format needs to be designed as platform-agnostic and compatible with multiple templating engines like Helm or Ansible, enabling flexibility in how the deployment configurations are generated and managed.
+To migrate applications from Cloud Foundry to Kubernetes, it is essential to
+translate these manifests into an intermediate format, or canonical form, that
+captures the intent and configuration of the CF manifest. This intermediate
+manifest serves as a bridge, retaining critical deployment configurations while
+adapting them to Kubernetes-native practices. The format needs to be designed 
+as platform-agnostic and compatible with multiple templating engines like Helm
+or Ansible, enabling flexibility in how the deployment configurations are
+generated and managed.
 
-The following table depicts the relationship between the Cloud Foundry Application manifest fields and the proposed location in the canonical form manifest.
+These structures are intended to abstract the CF application manifest format
+so that changes to the CF manifest are contained.
 
-### Space specification
+### Cloud Foundry specification
+This section outlines the Cloud Foundry (CF) schema fields as documented in the 
+[official CF documentation](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#concepts).
+It serves as a reference point for comparing and understanding the mappings 
+presented in the [Proposal Specification](#proposal-specification) section.
+
+#### Space-level configuration
+
+##### Definition
+
+| Name | Type | Description |
+| ----- | ----- | ----- |
+| **applications** | array of [app configurations](#app-level-configuration) | Configurations for apps in the space |
+| **version** | integer | The manifest schema version; currently the only valid version is `1`, defaults to `1` if not provided |
+
+#### App-level configuration
+
+This configuration is specified per application and applies to all of the application’s processes.
+
+##### Definition
+
+| Name | Type | Description |
+| ----- | ----- | ----- |
+| **name** | string | Name of the app |
+| **buildpacks** | array of strings | a) An empty array, which will automatically select the appropriate default buildpack according to the coding language b) An array of one or more URLs pointing to buildpacks c) An array of one or more installed buildpack names Replaces the legacy `buildpack` field |
+| **docker** | object | If present, the created app will have *Docker lifecycle type*[^1]; the value of this key is ignored by the API but may be used by clients to source the registry address of the image and credentials, if needed; the [generate manifest endpoint](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#generate-a-manifest-for-an-app) will return the registry address of the image and username provided with this key |
+| **env** | object | A key-value mapping of environment variables to be used for the app when running |
+| **processes** | array of [process configurations](#process-level-configuration) | List of configurations for individual process types |
+| **random-route** | boolean | Creates a random route for the app if `true`; if `routes` is specified, if the app already has routes, or if `no-route` is specified, this field is ignored regardless of its value |
+| **no-route** | bool | If false, no route is created for this application, regardless of the configuration. Note that health checks will be impacted since CF [is not able to reach](https://lists.cloudfoundry.org/g/cf-dev/topic/app_attribute_no_route_true/6333713) to the app externally to check the heart beat. This will need to be addressed in the manifest template provided by the user. |
+| **routes** | array of [route configurations](#route-level-configuration) | List declaring HTTP and TCP routes to be mapped to the app. |
+| **services** | array of [service configurations](#service-level-configuration) | A list of service-instances to bind to the app |
+| **sidecars** | array of [sidecar configurations](#sidecar-level-configuration) | A list of configurations for individual sidecars |
+| **stack** | string | The root filesystem to use with the buildpack, for example `cflinuxfs4` |
+| **metadata.labels** | array of k/v pairs | Labels applied to the app |
+| **metadata.annotations** | array of k/v pairs | Annotations applied to the app |
+| **timeout** | integer | **Maximum time it can take an application to startup before CF considers it as failed. Measured in seconds** |
+
+[^1] This allows Cloud Foundry to run pre-built Docker images. When staging an
+app with this lifecycle, the Docker registry is queried for metadata about the
+image, such as ports and start command. When running an app with this lifecycle,
+a container is created and the Docker image is executed inside of it.
+
+#### [Process-level configuration](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#processes)
+
+This configuration is for the individual process. Each process is created if it
+does not already exist. For backwards compatibility, the web process
+configuration may be placed at the top level of the application configuration,
+rather than listed under processes. However, if there is a process with `type: web`
+listed under processes, this configuration will override any at the top level.
+
+##### Definition
+
+| Name | Type | Description |
+| ----- | ----- | ----- |
+| **type** | string | **(Required)** The identifier for the processes to be configured |
+| **command** | string | The command used to start the process; this overrides start commands from [Procfiles](#procfiles) and buildpacks |
+| **disk\_quota** | string | The disk limit for all instances of the web process; this attribute requires a unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case |
+| **health-check-http-endpoint** | string | Endpoint called to determine if the app is healthy |
+| **health-check-invocation-timeout** | integer | The timeout in seconds for individual health check requests for http and port health checks |
+| **health-check-type** | string | Type of health check to perform; `none` is deprecated and an alias to `process` |
+| **[readiness-health-check-http-endpoint](https://docs.cloudfoundry.org/devguide/deploy-apps/manifest-attributes.html#readiness-health-check-http-ep)** | string | Endpoint called to determine if the app is ready to accept traffic.  |
+| **[readiness-health-check-invocation-timeout](https://docs.cloudfoundry.org/devguide/deploy-apps/manifest-attributes.html#readiness-health-check-invoc-time)** | integer | The timeout in seconds for individual health check requests for http and port health checks |
+| **[readiness-health-check-type](https://docs.cloudfoundry.org/devguide/deploy-apps/manifest-attributes.html#readiness-health-check-type)** | string | Type of check to perform; `none` is deprecated and an alias to `process` |
+| **instances** | integer | The number of instances to run |
+| **memory** | string | The memory limit for all instances of the web process; this attribute requires a unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case |
+| **log-rate-limit-per-second** | string | The log rate limit for all the instances of the process; this attribute requires a unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case, or \-1 or 0 |
+
+##### [Procfiles](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#procfiles)
+
+A Procfile enables you to declare required runtime processes, called process
+types, for your app. Procfiles must be named `Procfile` exactly and placed
+in the root directory of your application.
+
+***Example***
+
+```
+web: bundle exec rackup config.ru -p $PORT
+rake: bundle exec rake
+worker: bundle exec rake workers:start
+```
+
+In a Procfile, you declare one process type per line and use the syntax
+`PROCESS_TYPE: COMMAND`.
+
+* `PROCESS_TYPE` defines the type of the process.  
+* `COMMAND` is the command line to launch the process.
+
+###### Procfile use cases
+
+Many buildpacks provide their own process types and commands by default; however,
+there are special cases where specifying a custom `COMMAND` is necessary.
+Commands can be overwritten by providing a Procfile with the same process type.
+
+For example, a buildpack may provide a `worker` process type that runs the
+`rake default:start` command. If a Procfile is provided that also contains a
+`worker` process type, but a different command such as `rake custom:start`, the
+`rake custom:start` command will be used.
+
+Some buildpacks, such as Python, that work on a variety of frameworks, do not 
+attempt to provide a default start command. For these cases, a Procfile should
+be used to specify any necessary commands for the app.
+
+###### Web process
+
+`web` is a [special process type](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#web-process-type)
+that is required for all applications. The `web` `PROCESS_TYPE` must be specified
+by either the buildpack or the Procfile.
+
+###### Specifying processes in manifest files
+
+Custom process types can also be configured via a manifest file. Read more about
+[manifests](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#manifests).
+It is not recommended to specify processes in both a manifest and a Procfile for
+the same app.
+
+#### [Route-level configuration](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#routes)
+
+This [configuration](https://docs.cloudfoundry.org/devguide/deploy-apps/manifest-attributes.html#routes)
+is for *creating* mappings between the app and a route. Each route is created if
+it does not already exist. The protocol will be updated for any existing route
+mapping.
+
+Example:
+
+```
+---
+  ...
+  routes:
+  - route: example.com
+    protocol: http2
+  - route: www.example.com/foo
+  - route: tcp-example.com:1234
+```
+
+##### Definition
+
+| Name | Type | Description |
+| ----- | ----- | ----- |
+| **route** | string | **(Required)** The route URI |
+| **protocol** | string | (Optional) Protocol to use for this route. Valid protocols are `http1`, `http2`, and `tcp`. |
+
+#### [Service-level configuration](https://docs.cloudfoundry.org/devguide/deploy-apps/manifest-attributes.html#services-block)
+
+This configuration is *creating* new service bindings between the app and a 
+service instance. The `services` field can take either an array of service 
+instance name strings or an array of the following service-level fields.
+
+##### Definition
+
+| Name | Type | Description |
+| ----- | ----- | ----- |
+| **name** | string | **(Required)** The name of the service instance to be bound to |
+| **binding\_name** | string | The name of the service binding to be created |
+| **parameters** | object | A map of arbitrary key/value pairs to send to the service broker during binding |
+
+#### [Sidecar-level configuration](https://v3-apidocs.cloudfoundry.org/version/3.163.0/#sidecars)
+
+This configuration is for the individual sidecar. Each sidecar is created if
+it does not already exist.
+
+##### Definition
+
+| Name | Type | Description |
+| ----- | ----- | ----- |
+| **name** | string | **(Required)** The identifier for the sidecars to be configured |
+| **command** | string | The command used to start the sidecar |
+| **process\_types** | array of strings | List of processes to associate sidecar with |
+| **memory** | integer | Memory in MB that the sidecar will be allocated |
+
+### Proposal Specification
+
+#### Space specification
 
 | Name | Mapped (Y/N) | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
@@ -107,7 +303,7 @@ The following table depicts the relationship between the Cloud Foundry Applicati
 | **space** | Y | Metadata.Space | See [metadata specification](#metadata-specification). This field is only populated at runtime. |
 | **version** | N |  | The manifest schema version; currently the only valid version is 1, defaults to 1 if not provided |
 
-### Application specification
+#### Application specification
 
 | Name | Mapped  | Canonical Form | Comments |
 | ----- | :---: | ----- | ----- |
@@ -123,7 +319,6 @@ See [metadata specification](#metadata-specification). |
 | **services** | Y | Services | See [service specification](#service-specification). |
 | **sidecars** | Y | Sidecars | See [sidecar specification](#sidecar-specification). |
 | **metadata** | Y | Metadata | See [metadata specification](#metadata-specification). |
-| **buildpack** | N |  | Already deprecated in CF. See buildpacks. |
 | **timeout** | Y | StartupTimeout | Maximum time allowed for an application to respond to readiness or health checks during startup.If the application does not respond within this time, the platform will mark the deployment as failed. |
 | **instances** | Y | Replicas | Number of CF application instances |
 | **stack** | Y | Stack | Stack is derived from the `stack` field in the application manifest. The value is captured for information purposes because it has no relevance in Kubernetes. |
@@ -182,7 +377,9 @@ type Sidecar struct {
 
 ### Service specification
 
-Maps to Spec.Services in the canonical form. Only \`name\` and \`parameters\` CF fields are captured since \`binding\_name\` is only used when defining a service and not applicable to a Kubernetes application.
+Maps to Spec.Services in the canonical form. Only \`name\` and \`parameters\` CF
+fields are captured since \`binding\_name\` is only used when defining a service
+and not applicable to a Kubernetes application.
 
 | Name | Mapped  | Canonical Form | Description |
 | ----- | :---: | ----- | ----- |
@@ -234,13 +431,13 @@ type Metadata struct {
 | **disk\_quota** | Y | DiskQuota | Example: 1G unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case
 Note: In CF, limit for all instances of the **web** process; |
 | **memory** | Y | Memory | The value at the application level defines the default memory requirements for all processes in the application, when not specified by the process itself. The discovery process will consolidate the amount of memory specific to each process based on the information either in the application or the process fields. Example: 128MB unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case. Note: In CF, limit for all instances of the **web** process; |
-| **health-check-http-endpoint** | Y  | Probe.Endpoint | health-check fields are captured in a Probe structure, common with the readiness-heath-check. See (Probe specification)[#probe-specification]. |
-| **health-check-invocation-timeout** | Y | Probe.Timeout | See (Probe specification)[#probe-specification]. |
-| **health-check-interval** | Y | Probe.Interval | See (Probe specification)[#probe-specification]. |
+| **health-check-http-endpoint** | Y  | Probe.Endpoint | health-check fields are captured in a Probe structure, common with the readiness-heath-check. See [Probe specification](#probe-specification). |
+| **health-check-invocation-timeout** | Y | Probe.Timeout | See [Probe specification](#probe-specification). |
+| **health-check-interval** | Y | Probe.Interval | See [Probe specification](#probe-specification). |
 | **health-check-type** | N |  | Type of health check to perform; `none` is deprecated and an alias to `process` |
-| **readiness-check-http-endpoint** | Y | Probe.Endpoint | See (Probe specification)[#probe-specification]. |
-| **readiness-check-invocation-timeout** | Y | Probe.Timeout | See (Probe specification)[#probe-specification]. |
-| **readiness-check-interval** | Y | Probe.Interval | See (Probe specification)[#probe-specification]. |
+| **readiness-check-http-endpoint** | Y | Probe.Endpoint | See [Probe specification](#probe-specification). |
+| **readiness-check-invocation-timeout** | Y | Probe.Timeout | See [Probe specification](#probe-specification). |
+| **readiness-check-interval** | Y | Probe.Interval | See [Probe specification](#probe-specification). |
 | **readiness-health-check-type** | N |  | Type of health check to perform; `none` is deprecated and an alias to `process` |
 | **instances** | Y | Replicas | This field determines how many instances of the process will run in the application. |
 | **log-rate-limit-per-second** | Y | LogRateLimit | The log rate limit for all the instances of the process; unit of measurement: `B`, `K`, `KB`, `M`, `MB`, `G`, `GB`, `T`, or `TB` in upper case or lower case, or -1 or 0 |
@@ -272,6 +469,9 @@ type Process struct {
 ### ProcessType specification
 
 Represents a single process type as a string. Possible values are `worker`, or `web`.
+
+The proposed specification doesn't support custom process types defined in CF
+manifests or Procfiles.
 
 ```go
 type ProcessType string
@@ -309,9 +509,11 @@ type Probe struct {
 
 Captures the name of the route that will be shown as hostname.
 
-By default, the route URL is set using the application name as the hostname unless the `no-route` field is set to `true` or a route URL is explicitly defined.
+By default, the route URL is set using the application name as the hostname
+unless the `no-route` field is set to `true` or a route URL is explicitly defined.
 Processes of the `worker` type are not designed to have any ports open.
-If the application has globally defined routes, processes of the `web` type inherit the routes specified in that field.
+If the application has globally defined routes, processes of the `web` type
+inherit the routes specified in that field. \
 Examples:
 \---
 
