@@ -328,5 +328,5 @@ N/A
 - CI/CD pipelines for E2E testing for QE and releasing.
 - Hosting provider for binaries and documentation for releases.
 - Project Management tools for tasks, issues and bugs.
-- If REST API discovery is implemented, a Cloud Foundry instance for E2E testing with a suite of samples that cover
-  the acceptance test criteria.
+- If REST API discovery is implemented, a Korifi instance on a Kubernetes cluster for E2E
+  testing with a suite of samples that cover the acceptance test criteria.
